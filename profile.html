@@ -1,0 +1,672 @@
+{% verbatim %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TaskHive - Profile</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto+Mono:wght@400;500&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    body {
+      font-family: 'Roboto Mono', monospace;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    h1, h2, h3 {
+      font-family: 'Orbitron', sans-serif;
+    }
+    .neon-text {
+      text-shadow: 0 0 5px rgba(0, 255, 255, 0.5),
+                   0 0 10px rgba(0, 255, 255, 0.3);
+    }
+    .glow {
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
+    }
+    .neon-button {
+      background: linear-gradient(to right, #00ffff, #ff00ff);
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+      transition: 0.3s;
+    }
+    .neon-button:hover {
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+      transform: translateY(-1px);
+    }
+    .fade-enter-active, .fade-leave-active {
+      transition: opacity 0.3s ease-in-out;
+    }
+    .fade-enter, .fade-leave-to {
+      opacity: 0;
+    }
+    body.light-mode {
+      background-color: #f9fafb;
+      color: #111827;
+    }
+    body.light-mode .bg-gray-900 { background-color:#f3f4f6 !important; color:#111827; }
+    body.light-mode .bg-gray-800 { background-color:#e5e7eb !important; color:#111827; }
+    body.light-mode .bg-gray-700 { background-color:#d1d5db !important; color:#111827; }
+    body.light-mode .text-gray-100 { color:#111827 !important; }
+    body.light-mode .text-gray-300 { color:#4b5563 !important; }
+  </style>
+
+  <!-- simple auth redirect -->
+  <script>
+    const currentUser = localStorage.getItem("taskhive_current_user");
+    if (!currentUser || currentUser === "Guest") {
+      window.location.href = "/login/";
+    }
+  </script>
+</head>
+
+<body class="bg-gray-900 text-gray-100">
+<div id="app" class="min-h-screen flex flex-col items-center py-8 px-4 sm:px-6">
+
+  <!-- Top bar -->
+  <div class="w-full max-w-5xl flex justify-between items-center mb-4">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-cyan-300 neon-text">Profile & Settings</h1>
+      <p class="text-xs text-gray-400 mt-1">
+        Manage your TaskHive identity, security, and appearance.
+      </p>
+    </div>
+
+    <!-- ✅ FIXED: Back to Board goes to workspace (index.html) -->
+    <a
+      href="/workspace/"
+      class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-sm rounded-lg flex items-center"
+    >
+      <i class="fas fa-arrow-left mr-2"></i> Back to Board
+    </a>
+  </div>
+
+  <!-- COVER + AVATAR CARD -->
+  <div class="w-full max-w-5xl bg-gray-800 rounded-2xl overflow-hidden border border-cyan-500/30 mb-6">
+    <!-- Cover -->
+    <div class="relative h-40 sm:h-48 bg-gradient-to-r from-cyan-500/40 via-purple-500/40 to-pink-500/40">
+      <img
+        v-if="user.coverPhoto"
+        :src="user.coverPhoto"
+        alt="Cover"
+        class="absolute inset-0 w-full h-full object-cover"
+      />
+      <div class="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-transparent to-transparent"></div>
+
+      <input type="file" ref="coverInput" @change="changeCover" class="hidden" />
+      <button
+        @click="$refs.coverInput.click()"
+        class="absolute right-4 bottom-4 px-3 py-1.5 text-xs rounded-full bg-gray-900/80 text-gray-100 hover:bg-gray-900 flex items-center"
+      >
+        <i class="fas fa-image mr-2 text-cyan-300"></i> Change Cover
+      </button>
+    </div>
+
+    <!-- Avatar + basic info -->
+    <div class="px-6 pb-4 -mt-10 flex flex-col sm:flex-row sm:items-end sm:justify-between">
+      <div class="flex items-center space-x-4">
+        <div class="relative">
+          <img
+            :src="user.photo || defaultPhoto"
+            class="w-24 h-24 rounded-full border-4 border-cyan-400 object-cover shadow-lg bg-gray-900"
+          />
+          <input type="file" ref="photoInput" @change="changePhoto" class="hidden" />
+          <button
+            @click="$refs.photoInput.click()"
+            class="absolute bottom-0 right-0 bg-cyan-500 hover:bg-cyan-400 text-gray-900 p-1.5 rounded-full shadow"
+          >
+            <i class="fas fa-camera text-xs"></i>
+          </button>
+        </div>
+        <div class="mt-4 sm:mt-6">
+          <h2 class="text-xl font-semibold text-cyan-300">
+            {{ user.displayName || user.name || 'User' }}
+          </h2>
+          <p class="text-xs text-gray-400">@{{ user.username || 'username' }}</p>
+          <p class="text-xs text-gray-400 mt-1">
+            Joined: <span class="text-gray-300">{{ formatDate(user.joinDate) }}</span>
+            · Last seen: <span class="text-gray-300">{{ formatDateTime(user.lastLogin) }}</span>
+          </p>
+        </div>
+      </div>
+      <div class="mt-4 sm:mb-2 sm:mt-0 flex space-x-3">
+        <button
+          @click="saveChanges"
+          class="neon-button px-4 py-2 rounded-lg text-gray-900 text-sm font-semibold"
+        >
+          <i class="fas fa-save mr-2"></i> Save
+        </button>
+        <button
+          @click="resetProfile"
+          class="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-sm text-gray-100"
+        >
+          Reset
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- LEFT COLUMN -->
+    <div class="space-y-6 lg:col-span-2">
+      <!-- Basic Info -->
+      <section class="bg-gray-800 rounded-2xl p-5 border border-gray-700">
+        <h3 class="text-sm font-semibold text-cyan-300 mb-4 flex items-center">
+          <i class="fas fa-id-card mr-2"></i> Profile Information
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+          <div>
+            <label class="block text-gray-300 mb-1">Display Name</label>
+            <input
+              v-model="user.displayName"
+              class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            />
+          </div>
+          <div>
+            <label class="block text-gray-300 mb-1">Username</label>
+            <input
+              v-model="user.username"
+              class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              placeholder="taskhiveDev"
+            />
+          </div>
+          <div>
+            <label class="block text-gray-300 mb-1">Full Name</label>
+            <input
+              v-model="user.name"
+              class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            />
+          </div>
+          <div>
+            <label class="block text-gray-300 mb-1">Email</label>
+            <input
+              v-model="user.email"
+              type="email"
+              class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-gray-300 mb-1">Tagline</label>
+            <input
+              v-model="user.tagline"
+              placeholder="Building futuristic dashboards with neon vibes ✨"
+              class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-gray-300 mb-1">
+              Bio
+              <span class="text-xs text-gray-500">({{ bioLength }}/500)</span>
+            </label>
+            <textarea
+              v-model="user.bio"
+              rows="3"
+              maxlength="500"
+              class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              placeholder="Tell your team who you are, what you do, and what you love working on."
+            ></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- Social Links -->
+      <section class="bg-gray-800 rounded-2xl p-5 border border-gray-700">
+        <h3 class="text-sm font-semibold text-cyan-300 mb-4 flex items-center">
+          <i class="fas fa-share-nodes mr-2"></i> Social Links
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+          <div>
+            <label class="block text-gray-300 mb-1"><i class="fas fa-globe mr-1"></i> Website</label>
+            <input v-model="socials.website"
+                   placeholder="https://example.com"
+                   class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-100 focus:ring-2 focus:ring-cyan-500" />
+          </div>
+          <div>
+            <label class="block text-gray-300 mb-1"><i class="fab fa-github mr-1"></i> GitHub</label>
+            <input v-model="socials.github"
+                   placeholder="https://github.com/username"
+                   class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-100 focus:ring-2 focus:ring-cyan-500" />
+          </div>
+          <div>
+            <label class="block text-gray-300 mb-1"><i class="fab fa-linkedin mr-1"></i> LinkedIn</label>
+            <input v-model="socials.linkedin"
+                   placeholder="https://linkedin.com/in/username"
+                   class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-100 focus:ring-2 focus:ring-cyan-500" />
+          </div>
+          <div>
+            <label class="block text-gray-300 mb-1"><i class="fab fa-twitter mr-1"></i> Twitter / X</label>
+            <input v-model="socials.twitter"
+                   placeholder="https://twitter.com/username"
+                   class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-100 focus:ring-2 focus:ring-cyan-500" />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-gray-300 mb-1"><i class="fab fa-instagram mr-1"></i> Instagram</label>
+            <input v-model="socials.instagram"
+                   placeholder="https://instagram.com/username"
+                   class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-100 focus:ring-2 focus:ring-cyan-500" />
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="space-y-6">
+      <!-- Appearance -->
+      <section class="bg-gray-800 rounded-2xl p-5 border border-gray-700 text-sm">
+        <h3 class="text-sm font-semibold text-cyan-300 mb-4 flex items-center">
+          <i class="fas fa-palette mr-2"></i> Appearance
+        </h3>
+
+        <p class="text-xs text-gray-400 mb-2">Theme Mode</p>
+        <div class="flex space-x-2 mb-4">
+          <button
+            v-for="mode in themeModes"
+            :key="mode.id"
+            @click="setTheme(mode.id)"
+            class="flex-1 px-2 py-2 rounded-lg border text-xs"
+            :class="{
+              'border-cyan-400 bg-cyan-900/40 text-cyan-200': themeMode === mode.id,
+              'border-gray-700 bg-gray-900 text-gray-200 hover:border-cyan-400/60': themeMode !== mode.id
+            }"
+          >
+            <i :class="mode.icon" class="mr-1"></i>{{ mode.label }}
+          </button>
+        </div>
+
+        <p class="text-xs text-gray-400 mb-2">Accent Color</p>
+        <div class="flex flex-wrap gap-2">
+          <button
+            v-for="color in accentOptions"
+            :key="color"
+            @click="setAccent(color)"
+            class="w-7 h-7 rounded-full border-2"
+            :style="{ backgroundColor: color }"
+            :class="accentColor === color ? 'border-white' : 'border-transparent opacity-70 hover:opacity-100'"
+          ></button>
+        </div>
+      </section>
+
+      <!-- Security -->
+      <section class="bg-gray-800 rounded-2xl p-5 border border-gray-700 text-sm">
+        <h3 class="text-sm font-semibold text-cyan-300 mb-4 flex items-center">
+          <i class="fas fa-shield-alt mr-2"></i> Security
+        </h3>
+
+        <div class="mb-4">
+          <label class="block text-gray-300 mb-1">Current Password</label>
+          <input
+            type="password"
+            v-model="oldPassword"
+            class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-100 focus:ring-2 focus:ring-red-500"
+          />
+        </div>
+        <div class="mb-2">
+          <label class="block text-gray-300 mb-1">New Password</label>
+          <input
+            type="password"
+            v-model="newPassword"
+            class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-100 focus:ring-2 focus:ring-yellow-500"
+          />
+          <div class="flex items-center justify-between mt-1">
+            <span class="text-xs text-gray-400">Strength: <span :class="passwordStrengthClass">{{ passwordStrengthLabel }}</span></span>
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="block text-gray-300 mb-1">Confirm New Password</label>
+          <input
+            type="password"
+            v-model="confirmPassword"
+            class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-100 focus:ring-2 focus:ring-yellow-500"
+          />
+        </div>
+
+        <div class="flex items-center justify-between mt-3">
+          <span class="text-xs text-gray-300">Two-factor Authentication (2FA)</span>
+          <button
+            @click="toggle2FA"
+            class="relative w-11 h-6 rounded-full transition-colors"
+            :class="user.twofaEnabled ? 'bg-cyan-500' : 'bg-gray-600'"
+          >
+            <span
+              class="absolute top-0.5 left-0.5 w-5 h-5 bg-gray-900 rounded-full shadow transform transition-transform"
+              :style="{ transform: user.twofaEnabled ? 'translateX(18px)' : 'translateX(0)' }"
+            ></span>
+          </button>
+        </div>
+        <p class="text-[11px] text-gray-500 mt-1">
+          {{ user.twofaEnabled ? '2FA enabled. A code will be required on future logins.' : 'Enable 2FA for extra security.' }}
+        </p>
+      </section>
+
+      <!-- Notifications -->
+      <section class="bg-gray-800 rounded-2xl p-5 border border-gray-700 text-sm">
+        <h3 class="text-sm font-semibold text-cyan-300 mb-4 flex items-center">
+          <i class="fas fa-bell mr-2"></i> Notifications
+        </h3>
+        <div class="space-y-3">
+          <label class="flex items-center justify-between">
+            <span class="text-xs text-gray-300">Task updates</span>
+            <input type="checkbox" v-model="notifications.taskUpdates" class="form-checkbox text-cyan-500">
+          </label>
+          <label class="flex items-center justify-between">
+            <span class="text-xs text-gray-300">Project changes</span>
+            <input type="checkbox" v-model="notifications.projectUpdates" class="form-checkbox text-cyan-500">
+          </label>
+          <label class="flex items-center justify-between">
+            <span class="text-xs text-gray-300">Mentions & comments</span>
+            <input type="checkbox" v-model="notifications.mentions" class="form-checkbox text-cyan-500">
+          </label>
+          <label class="flex items-center justify-between">
+            <span class="text-xs text-gray-300">Newsletter & tips</span>
+            <input type="checkbox" v-model="notifications.newsletter" class="form-checkbox text-cyan-500">
+          </label>
+        </div>
+      </section>
+
+      <!-- Activity Summary + Danger Zone -->
+      <section class="bg-gray-800 rounded-2xl p-5 border border-red-500/40 text-sm">
+        <h3 class="text-sm font-semibold text-red-400 mb-3 flex items-center">
+          <i class="fas fa-exclamation-triangle mr-2"></i> Danger Zone
+        </h3>
+
+        <div class="mb-4 bg-gray-900/70 rounded-lg p-3 border border-gray-700">
+          <p class="text-xs text-gray-300 mb-2 font-semibold">Activity Snapshot</p>
+          <div class="flex justify-between text-[11px] text-gray-400">
+            <div>
+              <p class="text-gray-300">{{ stats.tasks }}</p>
+              <p>Tasks linked to your account</p>
+            </div>
+            <div>
+              <p class="text-gray-300">{{ stats.projects }}</p>
+              <p>Projects in workspace</p>
+            </div>
+            <div>
+              <p class="text-gray-300">{{ stats.files }}</p>
+              <p>Files uploaded</p>
+            </div>
+          </div>
+        </div>
+
+        <p class="text-xs text-gray-300 mb-2">
+          Deleting your profile will log you out and clear your saved profile settings from this browser.
+        </p>
+        <label class="block text-xs text-gray-400 mb-2">
+          Type <span class="text-red-400 font-mono">DELETE</span> to confirm:
+        </label>
+        <input
+          v-model="deleteConfirmText"
+          class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-100 mb-3 focus:ring-2 focus:ring-red-500"
+        />
+        <button
+          @click="deleteAccount"
+          class="w-full px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white text-sm font-semibold"
+        >
+          Delete Profile
+        </button>
+      </section>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <transition name="fade">
+    <div
+      v-if="toastVisible"
+      class="fixed bottom-6 right-6 bg-gray-800 px-4 py-3 rounded-lg text-cyan-300 glow text-sm flex items-center"
+    >
+      <i class="fas fa-check-circle mr-2"></i>
+      <span>{{ toastMessage }}</span>
+    </div>
+  </transition>
+</div>
+
+<script>
+new Vue({
+  el: '#app',
+  data() {
+    return {
+      defaultPhoto: 'https://cdn-icons-png.flaticon.com/512/149/149071.png',
+      user: {
+        name: '',
+        email: '',
+        displayName: '',
+        username: '',
+        tagline: '',
+        bio: '',
+        photo: '',
+        coverPhoto: '',
+        password: '',
+        joinDate: '',
+        lastLogin: '',
+        twofaEnabled: false
+      },
+      socials: {
+        website: '',
+        github: '',
+        linkedin: '',
+        twitter: '',
+        instagram: ''
+      },
+      notifications: {
+        taskUpdates: true,
+        projectUpdates: true,
+        mentions: true,
+        newsletter: false
+      },
+      // theme
+      themeMode: 'dark',
+      accentColor: '#22d3ee',
+      themeModes: [
+        { id: 'dark',  label: 'Dark',  icon: 'fas fa-moon' },
+        { id: 'light', label: 'Light', icon: 'fas fa-sun' }
+      ],
+      accentOptions: ['#22d3ee', '#6366f1', '#ec4899', '#f97316', '#22c55e', '#e11d48'],
+
+      // security
+      oldPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+
+      // stats
+      stats: { tasks: 0, projects: 0, files: 0 },
+
+      deleteConfirmText: '',
+      toastVisible: false,
+      toastMessage: ''
+    };
+  },
+  computed: {
+    bioLength() {
+      return (this.user.bio || '').length;
+    },
+    passwordStrength() {
+      const pwd = this.newPassword || '';
+      let score = 0;
+      if (pwd.length >= 8) score++;
+      if (/[A-Z]/.test(pwd)) score++;
+      if (/[a-z]/.test(pwd)) score++;
+      if (/[0-9]/.test(pwd)) score++;
+      if (/[^A-Za-z0-9]/.test(pwd)) score++;
+      return score;
+    },
+    passwordStrengthLabel() {
+      const s = this.passwordStrength;
+      if (!this.newPassword) return 'None';
+      if (s <= 2) return 'Weak';
+      if (s === 3) return 'Medium';
+      if (s === 4) return 'Strong';
+      return 'Very Strong';
+    },
+    passwordStrengthClass() {
+      const base = 'font-semibold';
+      if (!this.newPassword) return base + ' text-gray-400';
+      if (this.passwordStrength <= 2) return base + ' text-red-400';
+      if (this.passwordStrength === 3) return base + ' text-yellow-400';
+      return base + ' text-green-400';
+    }
+  },
+  mounted() {
+    // load base user
+    const stored = JSON.parse(localStorage.getItem('taskhive_current_user') || '{}');
+    const nowIso = new Date().toISOString();
+
+    this.user = {
+      name: stored.name || '',
+      email: stored.email || '',
+      displayName: stored.displayName || stored.name || '',
+      username: stored.username || '',
+      tagline: stored.tagline || '',
+      bio: stored.bio || '',
+      photo: stored.photo || '',
+      coverPhoto: stored.coverPhoto || '',
+      password: stored.password || 'password123',
+      joinDate: stored.joinDate || nowIso,
+      lastLogin: stored.lastLogin || nowIso,
+      twofaEnabled: stored.twofaEnabled || false
+    };
+
+    // socials
+    this.socials = stored.socials || this.socials;
+
+    // notifications
+    this.notifications = stored.notifications || this.notifications;
+
+    // theme
+    const savedTheme = localStorage.getItem('taskhive_theme');
+    if (savedTheme) this.themeMode = savedTheme;
+    if (this.themeMode === 'light') document.body.classList.add('light-mode');
+
+    const savedAccent = localStorage.getItem('taskhive_accent');
+    if (savedAccent) this.accentColor = savedAccent;
+
+    // simple stats from other localStorage collections
+    const tasks = JSON.parse(localStorage.getItem('taskhive_tasks') || '[]');
+    const projects = JSON.parse(localStorage.getItem('taskhive_projects') || '[]');
+    const files = JSON.parse(localStorage.getItem('taskhive_files') || '[]');
+    this.stats = {
+      tasks: tasks.length,
+      projects: projects.length,
+      files: files.length
+    };
+  },
+  methods: {
+    // images
+    changePhoto(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => { this.user.photo = reader.result; };
+      reader.readAsDataURL(file);
+    },
+    changeCover(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => { this.user.coverPhoto = reader.result; };
+      reader.readAsDataURL(file);
+    },
+
+    // theme
+    setTheme(mode) {
+      this.themeMode = mode;
+      localStorage.setItem('taskhive_theme', mode);
+      if (mode === 'light') document.body.classList.add('light-mode');
+      else document.body.classList.remove('light-mode');
+      this.showToast('Theme updated');
+    },
+    setAccent(color) {
+      this.accentColor = color;
+      localStorage.setItem('taskhive_accent', color);
+      this.showToast('Accent color updated');
+    },
+
+    // security
+    toggle2FA() {
+      this.user.twofaEnabled = !this.user.twofaEnabled;
+      this.showToast(this.user.twofaEnabled ? '2FA enabled' : '2FA disabled');
+    },
+
+    // saving
+    saveChanges() {
+      // password change logic
+      if (this.newPassword) {
+        if (this.oldPassword !== this.user.password) {
+          this.showToast('Old password is incorrect');
+          return;
+        }
+        if (this.newPassword !== this.confirmPassword) {
+          this.showToast('New passwords do not match');
+          return;
+        }
+        if (this.passwordStrength <= 2) {
+          this.showToast('Password is too weak');
+          return;
+        }
+        this.user.password = this.newPassword;
+      }
+
+      const updated = {
+        ...this.user,
+        socials: this.socials,
+        notifications: this.notifications
+      };
+
+      localStorage.setItem('taskhive_current_user', JSON.stringify(updated));
+
+      // reset password fields
+      this.oldPassword = '';
+      this.newPassword = '';
+      this.confirmPassword = '';
+
+      this.showToast('Profile updated successfully');
+    },
+
+    resetProfile() {
+      this.oldPassword = '';
+      this.newPassword = '';
+      this.confirmPassword = '';
+      this.deleteConfirmText = '';
+      this.showToast('Fields cleared (unsaved changes only)');
+    },
+
+    deleteAccount() {
+      if (this.deleteConfirmText !== 'DELETE') {
+        this.showToast('Type DELETE to confirm');
+        return;
+      }
+      localStorage.removeItem('taskhive_current_user');
+      this.showToast('Profile deleted');
+      setTimeout(() => {
+        window.location.href = "/login/";
+      }, 800);
+    },
+
+    // utils
+    showToast(msg) {
+      this.toastMessage = msg;
+      this.toastVisible = true;
+      setTimeout(() => { this.toastVisible = false; }, 2500);
+    },
+    formatDate(iso) {
+      if (!iso) return 'N/A';
+      const d = new Date(iso);
+      return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+    },
+    formatDateTime(iso) {
+      if (!iso) return 'N/A';
+      const d = new Date(iso);
+      return d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+  }
+});
+</script>
+</body>
+</html>
+{% endverbatim %}

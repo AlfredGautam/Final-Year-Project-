@@ -1,0 +1,351 @@
+{% verbatim %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TaskHive - Login</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto+Mono:wght@400;500&display=swap"
+        rel="stylesheet" />
+
+  <style>
+    body {
+      font-family: "Roboto Mono", monospace;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    h1, h2, h3, h4 { font-family: "Orbitron", sans-serif; }
+    .neon-text {
+      text-shadow: 0 0 5px rgba(0, 255, 255, 0.5), 0 0 10px rgba(0, 255, 255, 0.3);
+    }
+    .neon-button {
+      background: linear-gradient(to right, #00ffff, #ff00ff);
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+      transition: all 0.3s ease;
+    }
+    .neon-button:hover {
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.5), 0 0 30px rgba(255, 0, 255, 0.3);
+      transform: translateY(-1px);
+    }
+    .glow { box-shadow: 0 0 10px rgba(0, 255, 255, 0.5); }
+    .input-focus:focus {
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+      border-color: #00ffff;
+    }
+
+    .google-btn {
+      background: #ffffff;
+      color: #333;
+      border: 1px solid #dadce0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+    }
+    .google-btn:hover {
+      background: #f8f9fa;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      transform: translateY(-1px);
+    }
+
+    body.light-mode { background-color: #f9fafb; color: #111827; }
+    body.light-mode .bg-gray-900 { background-color: #f3f4f6 !important; color: #111827; }
+    body.light-mode .bg-gray-800 { background-color: #e5e7eb !important; color: #111827; }
+    body.light-mode .bg-gray-700 { background-color: #d1d5db !important; color: #111827; }
+    body.light-mode .google-btn { background: #ffffff; }
+  </style>
+</head>
+
+<body class="bg-gray-900 text-gray-100 min-h-screen flex items-center justify-center">
+  <div id="app" class="w-full max-w-md px-4">
+
+    <!-- Logo + theme toggle -->
+    <div class="flex items-center justify-between mb-8">
+      <div class="flex items-center">
+        <div class="text-cyan-400 text-3xl mr-3 neon-text animate-pulse">
+          <i class="fas fa-bug"></i>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold text-cyan-300 neon-text">TaskHive</h1>
+          <p class="text-xs text-gray-400">Team Collaboration Platform</p>
+        </div>
+      </div>
+      <button @click="toggleTheme"
+              class="w-9 h-9 rounded-full flex items-center justify-center bg-gray-800 hover:bg-gray-700 transition-all"
+              :title="isDark ? 'Switch to Light mode' : 'Switch to Dark mode'">
+        <i v-if="isDark" class="fas fa-sun text-yellow-300 text-sm"></i>
+        <i v-else class="fas fa-moon text-indigo-500 text-sm"></i>
+      </button>
+    </div>
+
+    <!-- Card -->
+    <div class="bg-gray-800/90 rounded-2xl p-6 border border-cyan-500/20 glow
+                bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold text-cyan-300">
+          {{ isLogin ? 'Login' : 'Create Account' }}
+        </h2>
+        <button class="text-xs text-cyan-300 hover:text-cyan-200 underline"
+                @click="toggleMode">
+          {{ isLogin ? 'Need an account? Register' : 'Already have an account? Login' }}
+        </button>
+      </div>
+
+      <div class="space-y-4">
+
+        <!-- Name (only register) -->
+        <div v-if="!isLogin">
+          <label class="block text-sm font-medium text-gray-300 mb-1">Full Name</label>
+          <input v-model="form.name" type="text"
+                 class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg input-focus focus:outline-none text-gray-100"
+                 placeholder="e.g. Alfred Gautam" />
+        </div>
+
+        <!-- Email -->
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1">Email</label>
+          <input v-model="form.email" type="email"
+                 class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg input-focus focus:outline-none text-gray-100"
+                 placeholder="you@example.com" />
+        </div>
+
+        <!-- Password -->
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1">Password</label>
+          <input v-model="form.password" type="password"
+                 class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg input-focus focus:outline-none text-gray-100"
+                 placeholder="••••••••" />
+        </div>
+
+        <!-- Error / Success -->
+        <div v-if="message" class="mt-2">
+          <p class="text-sm"
+             :class="{ 'text-red-400': isError, 'text-green-400': !isError }">
+            {{ message }}
+          </p>
+        </div>
+
+        <!-- Primary Action Button -->
+        <button @click="handleSubmit"
+                :disabled="loading"
+                class="w-full mt-4 py-2 rounded-lg text-white font-medium neon-button flex items-center justify-center"
+                :class="{ 'opacity-70 cursor-not-allowed': loading }">
+          <i class="fas fa-arrow-right-to-bracket mr-2"></i>
+          {{ loading ? 'Please wait...' : (isLogin ? 'Login to TaskHive' : 'Register & Continue') }}
+        </button>
+
+        <!-- Divider -->
+        <div class="relative my-6">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-gray-600"></div>
+          </div>
+          <div class="relative flex justify-center text-sm">
+            <span class="px-4 bg-gray-800 text-gray-400">OR</span>
+          </div>
+        </div>
+
+        <a href="/accounts/google/login/"
+           class="w-full py-2 rounded-lg font-medium google-btn flex items-center justify-center">
+          <img src="https://developers.google.com/identity/images/g-logo.png"
+               alt="Google" class="w-5 h-5 mr-3" />
+          Continue with Google
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    new Vue({
+      el: "#app",
+      data() {
+        return {
+          isLogin: true,
+          isDark: true,
+          loading: false,
+          form: { name: "", email: "", password: "" },
+          message: "",
+          isError: false,
+          nextUrl: "/user/"
+        };
+      },
+      mounted() {
+        const cur = localStorage.getItem("taskhive_current_user");
+        if (cur === "Guest") localStorage.removeItem("taskhive_current_user");
+
+        const params = new URLSearchParams(window.location.search);
+        const next = params.get("next");
+        if (next) this.nextUrl = next;
+
+        this.initTheme();
+      },
+      methods: {
+        // ✅ CSRF cookie helper (Django needs this for POST)
+        getCookie(name) {
+          const value = `; ${document.cookie}`;
+          const parts = value.split(`; ${name}=`);
+          if (parts.length === 2) return parts.pop().split(";").shift();
+          return "";
+        },
+
+        initTheme() {
+          const saved = localStorage.getItem("taskhive_theme");
+          if (saved === "light") {
+            this.isDark = false;
+            document.body.classList.add("light-mode");
+          } else {
+            this.isDark = true;
+            document.body.classList.remove("light-mode");
+          }
+        },
+        toggleTheme() {
+          this.isDark = !this.isDark;
+          if (this.isDark) {
+            localStorage.setItem("taskhive_theme", "dark");
+            document.body.classList.remove("light-mode");
+          } else {
+            localStorage.setItem("taskhive_theme", "light");
+            document.body.classList.add("light-mode");
+          }
+        },
+        toggleMode() {
+          this.isLogin = !this.isLogin;
+          this.message = "";
+          this.isError = false;
+          this.loading = false;
+          this.form.password = "";
+        },
+
+        // ✅ store JSON user for other pages
+        saveUserToLocalStorage() {
+          const email = (this.form.email || "").trim().toLowerCase();
+          const fallbackName =
+            (this.form.name || "").trim() ||
+            (email ? email.split("@")[0] : "User");
+
+          const userObj = {
+            name: fallbackName,
+            email: email,
+            username: email ? email.split("@")[0] : "",
+            displayName: fallbackName,
+            lastLogin: new Date().toISOString()
+          };
+
+          localStorage.setItem("taskhive_current_user", JSON.stringify(userObj));
+        },
+
+        handleSubmit() {
+          this.message = "";
+          this.isError = false;
+
+          if (!this.form.email || !this.form.password || (!this.isLogin && !this.form.name)) {
+            this.isError = true;
+            this.message = "Please fill all required fields.";
+            return;
+          }
+
+          if (this.form.password.length < 6) {
+            this.isError = true;
+            this.message = "Password should be at least 6 characters.";
+            return;
+          }
+
+          if (this.isLogin) this.djangoLogin();
+          else this.djangoRegister();
+        },
+
+        async djangoLogin() {
+          this.loading = true;
+          try {
+            const email = this.form.email.trim().toLowerCase();
+            const csrf = this.getCookie("csrftoken");
+
+            const res = await fetch("/api/login/", {
+              method: "POST",
+              credentials: "same-origin", // ✅ send cookies
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrf // ✅ CSRF
+              },
+              body: JSON.stringify({
+                username: email,       // backend might expect username
+                email: email,          // optional
+                password: this.form.password
+              })
+            });
+
+            const text = await res.text();
+            let data = {};
+            try { data = JSON.parse(text); } catch (e) {}
+
+            if (!res.ok || !data.ok) {
+              this.isError = true;
+              this.message = data.error || `Login failed (HTTP ${res.status}).`;
+              return;
+            }
+
+            this.isError = false;
+            this.message = "Login successful! Redirecting...";
+            this.saveUserToLocalStorage();
+            setTimeout(() => window.location.href = (this.nextUrl || "/user/"), 400);
+
+          } catch (err) {
+            this.isError = true;
+            this.message = "Network error. Try again.";
+          } finally {
+            this.loading = false;
+          }
+        },
+
+        async djangoRegister() {
+          this.loading = true;
+          try {
+            const email = this.form.email.trim().toLowerCase();
+            const csrf = this.getCookie("csrftoken");
+
+            const res = await fetch("/api/register/", {
+              method: "POST",
+              credentials: "same-origin",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrf
+              },
+              body: JSON.stringify({
+                name: this.form.name.trim(),
+                email: email,
+                username: email,      // ✅ many backends require username
+                password: this.form.password
+              })
+            });
+
+            const text = await res.text();
+            let data = {};
+            try { data = JSON.parse(text); } catch (e) {}
+
+            if (!res.ok || !data.ok) {
+              this.isError = true;
+              this.message = data.error || `Registration failed (HTTP ${res.status}).`;
+              return;
+            }
+
+            this.isError = false;
+            this.message = "Account created! Redirecting...";
+            this.saveUserToLocalStorage();
+            setTimeout(() => window.location.href = (this.nextUrl || "/user/"), 400);
+
+          } catch (err) {
+            this.isError = true;
+            this.message = "Network error. Try again.";
+          } finally {
+            this.loading = false;
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
+{% endverbatim %}
