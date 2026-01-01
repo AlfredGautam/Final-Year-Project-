@@ -1,4 +1,4 @@
-
+{% verbatim %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -160,7 +160,7 @@
       z-index:10;
     }
 
-    .content h2{
+    .introText h2{
       font-family:'Orbitron', sans-serif;
       font-size:48px;
       line-height:1.1;
@@ -170,12 +170,13 @@
       -webkit-text-fill-color:transparent;
     }
 
-    .content p{
+    .introText p{
       font-size:16px;
       color:var(--muted);
       line-height:1.7;
-      max-width:700px;
+      min-width:700px;
       margin-bottom:40px;
+      text-align:center;
     }
 
     .ctaRow{
@@ -223,7 +224,7 @@
       display:grid;
       grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));
       gap:32px;
-      max-width:1200px;
+      max-width:1459px;
       width:100%;
     }
 
@@ -338,8 +339,11 @@
   <!-- MAIN CONTENT - NOW SCROLLABLE -->
   <main>
     <div class="content">
-      <h2>Welcome to TaskHive</h2>
+      <div class="introText">
+         
+        <h2>Welcome to TaskHive</h2>
       <p>Supercharge your team's productivity with real-time collaboration, Kanban boards, team management, and seamless task tracking all wrapped in a sleek futuristic interface.</p>
+      </div>
 
       <div class="ctaRow">
         <a href="/login/" class="btn btnPrimary">Get Started</a>
@@ -386,4 +390,4 @@
 
 </body>
 </html>
-
+{% endverbatim %}
